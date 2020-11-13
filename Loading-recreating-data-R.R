@@ -1,4 +1,5 @@
 # Loading and recreating matlab-data in R.
+# Creating sub-set of data without incongruent trials, translate back to matlab.
 
 #Get the R.matlab package to read mat-data (if not installed), and load the package.
 pakke <- library()
@@ -35,3 +36,31 @@ for(i in partID){
 }
 names <- c("subject","wasrespcor","biasedtrial","whichcue","whichchosen","responsetimes","contrast","targetarraystd","confidencerts","confidencerep","wasrespoptout","realstdcats", paste("pvs",1:8,sep=""))
 colnames(data) <- names
+Exp1236 <- as.data.frame(data)
+
+# Analyses
+## Compare mean vs. mode pvs
+### Mean
+Exp1236$pvsmean <- rowMeans(Exp1236[13:20])
+#### Simplified
+Exp1236$pvsmean <- as.numeric(Exp1236$pvsmean>0)
+Exp1236$pvsmean <- replace(Exp1236$pvsmean, Exp1236$pvsmean==0, -1)
+### Mode
+pvsmode <- Exp1236[13:20]
+pvsmode <- pvsmode>0
+pvsmode <- cbind(pvsmode,(rowSums(pvsmode)-4))
+pvsmode <- cbind(pvsmode, pvsmode[,9]>0, (pvsmode[,9]<0)*-1)
+pvsmode <- cbind(pvsmode, rowSums(pvsmode[,10:11]))
+Exp1236$pvsmode <- pvsmode[,12]
+### Equal mean and mode
+equal <- sum(Exp1236$pvsmean==Exp1236$pvsmode, na.rm=TRUE)/(sum(Exp1236$pvsmean==Exp1236$pvsmode, na.rm=TRUE)+sum(Exp1236$pvsmean!=Exp1236$pvsmode, na.rm=TRUE))
+print(equal)
+### Discrepancy between mean and mode
+discrep <- sum(Exp1236$pvsmean!=Exp1236$pvsmode, na.rm=TRUE)/(sum(Exp1236$pvsmean==Exp1236$pvsmode, na.rm=TRUE)+sum(Exp1236$pvsmean!=Exp1236$pvsmode, na.rm=TRUE))
+print(discrep)
+
+# Subset of data with only non-discpreancy trials
+Exp1236$equal <- Exp1236$pvsmean==Exp1236$pvsmode
+Exp1236Sub <- Exp1236[Exp1236$equal,]
+
+
